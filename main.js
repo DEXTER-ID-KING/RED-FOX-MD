@@ -41,6 +41,7 @@ const msgRetryCounterCache = new NodeCache();
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 
+
 const sessionDir = path.join(__dirname, 'session');
 const credsPath = path.join(sessionDir, 'creds.json');
 
@@ -50,19 +51,26 @@ if (!fs.existsSync(sessionDir)) {
 
 async function downloadSessionData() {
     if (!config.SESSION_ID) {
-        console.error('🛠️⚙️Please add your session to SESSION_ID env ‼️');
+        console.error('❌ Please set SESSION_ID in environment variables!');
         return false;
     }
-    const sessdata = config.SESSION_ID.split("Red_Fox-MD:/")[1];
-    const url = `https://pastebin.com/raw/${sessdata}`;
-    try {
-        const response = await axios.get(url);
-        const data = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
-        await fs.promises.writeFile(credsPath, data);
-        console.log("🔐 Session Successfully Loaded !!⏳");
-        return true;
-    } catch (error) {
-       // console.error('Failed to download session data:', error);
+
+    const prefix = "HESHAN-MD~";
+    
+    if (config.SESSION_ID.startsWith(prefix)) {
+        try {
+            const base64Data = config.SESSION_ID.slice(prefix.length);
+            const decodedData = Buffer.from(base64Data, 'base64').toString('utf-8');
+            
+            await fs.promises.writeFile(credsPath, decodedData);
+            console.log("🔒 Session decoded and saved successfully!");
+            return true;
+        } catch (error) {
+            console.error('❌ Base64 decode failed:', error.message);
+            return false;
+        }
+    } else {
+        console.error('❌ SESSION_ID must start with "DASSA" prefix!');
         return false;
     }
 }
