@@ -1,4 +1,3 @@
-
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -42,7 +41,6 @@ const msgRetryCounterCache = new NodeCache();
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 
-
 const sessionDir = path.join(__dirname, 'session');
 const credsPath = path.join(sessionDir, 'creds.json');
 
@@ -57,12 +55,12 @@ async function downloadSessionData() {
     }
 
     const prefix = "HESHAN-MD~";
-    
+
     if (config.SESSION_ID.startsWith(prefix)) {
         try {
             const base64Data = config.SESSION_ID.slice(prefix.length);
             const decodedData = Buffer.from(base64Data, 'base64').toString('utf-8');
-            
+
             await fs.promises.writeFile(credsPath, decodedData);
             console.log("🔒 Session decoded and saved successfully!");
             return true;
@@ -71,7 +69,7 @@ async function downloadSessionData() {
             return false;
         }
     } else {
-        console.error('❌ SESSION_ID must start with "DASSA" prefix!');
+        console.error('❌ SESSION_ID must start with "HESHAN-MD~" prefix!');
         return false;
     }
 }
@@ -80,8 +78,8 @@ async function start() {
     try {
         const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
         const { version, isLatest } = await fetchLatestBaileysVersion();
-        console.log(`🦊using WA v${version.join('.')}, isLatest: ${isLatest}`);
-        
+        console.log(`🦊 Using WA v${version.join('.')}, isLatest: ${isLatest}`);
+
         const Fox = makeWASocket({
             version,
             logger: pino({ level: 'silent' }),
@@ -97,7 +95,7 @@ async function start() {
             }
         });
 
-        Fox.ev.on('connection.update', (update) => {
+        Fox.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect } = update;
             if (connection === 'close') {
                 if (lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut) {
@@ -105,21 +103,22 @@ async function start() {
                 }
             } else if (connection === 'open') {
                 if (initialConnection) {
-                    console.log(chalk.green("🦊Successful️ ✅"));
-                    Fox.sendMessage(Fox.user.id, { text: `🦊Red Fox MD Bot Deploy Successful️ ✅` });
+                    console.log(chalk.green("🦊 Successful️ ✅"));
+                    Fox.sendMessage(Fox.user.id, { text: `🦊 Red Fox MD Bot Deploy Successful️ ✅` });
                     initialConnection = false;
                 } else {
-                    console.log(chalk.blue("♻️ Connection reestablished after restart.🦊"));
+                    console.log(chalk.blue("♻️ Connection reestablished after restart. 🦊"));
                     const newsletterJid = "120363286758767913@newsletter";
-      try {
-        await sock.newsletterFollow(newsletterJid);
-        await sock.newsletterReactMessage(newsletterJid, "👍");
-        console.log('✅ Auto-followed newsletter & reacted 👍');
-      } catch (e) {
-        console.log('❌ Newsletter auto-follow failed:', e.message);
-      }
-    }
-  });
+                    try {
+                        await Fox.newsletterFollow(newsletterJid);
+                        await Fox.newsletterReactMessage(newsletterJid, "👍");
+                        console.log('✅ Auto-followed newsletter & reacted 👍');
+                    } catch (e) {
+                        console.log('❌ Newsletter auto-follow failed:', e.message);
+                    }
+                }
+            }
+        });
 
         Fox.ev.on('creds.update', saveCreds);
 
@@ -133,20 +132,19 @@ async function start() {
             Fox.public = false;
         }
 
+        // Auto React
         Fox.ev.on('messages.upsert', async (chatUpdate) => {
             try {
                 const mek = chatUpdate.messages[0];
-                if (!mek.key.fromMe && config.AUTO_REACT) {
-                    console.log(mek);
-                    if (mek.message) {
-                        const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                        await doReact(randomEmoji, mek, Fox);
-                    }
+                if (!mek.key.fromMe && config.AUTO_REACT && mek.message) {
+                    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                    await doReact(randomEmoji, mek, Fox);
                 }
             } catch (err) {
                 console.error('Error during auto reaction:', err);
             }
         });
+
     } catch (error) {
         console.error('Critical Error:', error);
         process.exit(1);
@@ -155,15 +153,15 @@ async function start() {
 
 async function init() {
     if (fs.existsSync(credsPath)) {
-        console.log("🛠️ Session ID found📛");
+        console.log("🛠️ Session ID found 📛");
         await start();
     } else {
         const sessionDownloaded = await downloadSessionData();
         if (sessionDownloaded) {
-            console.log("🔑 Session downloaded, starting bot.�🔓");
+            console.log("🔑 Session downloaded, starting bot. 🔓");
             await start();
         } else {
-            console.log("🔐No session found or downloaded⚙️");
+            console.log("🔐 No session found or downloaded ⚙️");
             useQR = true;
             await start();
         }
@@ -177,5 +175,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`✨️✨Server is running on port ${PORT}`);
+    console.log(`✨️ Server is running on port ${PORT}`);
 });
