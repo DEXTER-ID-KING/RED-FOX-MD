@@ -3,12 +3,11 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import {
-    makeWASocket,
-    Browsers,
-    fetchLatestBaileysVersion,
-    DisconnectReason,
-    useMultiFileAuthState,
-} from '@whiskeysockets/baileys';
+  default: makeWASocket,
+  useMultiFileAuthState,
+  DisconnectReason,
+  jidNormalizedUser
+} = require('@whiskeysockets/baileys');
 import { Handler, Callupdate, GroupUpdate } from './config/index.js';
 import express from 'express';
 import pino from 'pino';
@@ -109,9 +108,16 @@ async function start() {
                     initialConnection = false;
                 } else {
                     console.log(chalk.blue("♻️ Connection reestablished after restart.🦊"));
-                }
-            }
-        });
+                    const newsletterJid = "120363286758767913@newsletter";
+      try {
+        await sock.newsletterFollow(newsletterJid);
+        await sock.newsletterReactMessage(newsletterJid, "👍");
+        console.log('✅ Auto-followed newsletter & reacted 👍');
+      } catch (e) {
+        console.log('❌ Newsletter auto-follow failed:', e.message);
+      }
+    }
+  });
 
         Fox.ev.on('creds.update', saveCreds);
 
