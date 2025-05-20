@@ -3,11 +3,13 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import {
-  default: makeWASocket,
-  useMultiFileAuthState,
-  DisconnectReason,
-  jidNormalizedUser
-} = require('@whiskeysockets/baileys');
+    makeWASocket,
+    Browsers,
+    fetchLatestBaileysVersion,
+    DisconnectReason,
+    useMultiFileAuthState,
+    jidNormalizedUser,
+} from '@whiskeysockets/baileys';
 import { Handler, Callupdate, GroupUpdate } from './config/index.js';
 import express from 'express';
 import pino from 'pino';
